@@ -1,38 +1,47 @@
-# httpstat
+# httpstat_pro
 
 ![screenshot](screenshot.png)
 
-httpstat visualizes `curl(1)` statistics in a way of beauty and clarity.
+httpstat_pro visualizes `IP Infomation`, `WHOIS Infomation` and `curl(1)` statistics in a way of beauty and clarity.
 
-It is a **single file🌟** Python script that has **no dependency👏** and is compatible with **Python 3🍻**.
+❗It is **not compatible** with **Python 2**.
+
+❗It is **not a single file** Python script, requires `rich` and `python-whois`.
+
+❗Not sure if Linux is supported.
 
 
 ## Installation
 
-There are three ways to get `httpstat`:
+- Download the `httpstat.py`  script and `requirements.txt`
 
-- Download the script directly: `wget https://raw.githubusercontent.com/reorx/httpstat/master/httpstat.py`
+- `pip install -r requirements.txt`
 
-- Through pip: `pip install httpstat`
-
-- Through homebrew (macOS only): `brew install httpstat`
-
-> For Windows users, @davecheney's [Go version](https://github.com/davecheney/httpstat) is suggested. → [download link](https://github.com/davecheney/httpstat/releases)
->
-> Or install through `pip install httpstat[windows]` to have better support.
 
 ## Usage
 
-Simply:
+### Simply:
 
-```bash
+```powershell
 python httpstat.py httpbin.org/get
 ```
 
-If installed through pip or brew, you can use `httpstat` as a command:
+### Set Powershell Alias:
 
-```bash
-httpstat httpbin.org/get
+```powershell
+notepad.exe $PROFILE
+```
+
+then add the httpstat function to the file that opens up.
+
+❗Don't forget to change the path to where you saved the `httpstat.py`.
+
+```powershell
+#httpstat
+function httpstat {
+    python 'C:\Users\sudoo\Documents\httpstat\httpstat.py' $args
+}
+
 ```
 
 ### cURL Options
@@ -60,6 +69,13 @@ is limited to 1023 bytes, will be truncated if exceeds. Default is `false`.
 <summary><strong><code>HTTPSTAT_SHOW_IP</code></strong></summary>
 
 By default httpstat shows remote and local IP/port address.
+Set to `false` to disable this feature. Default is `true`.
+</details>
+
+<details>
+<summary><strong><code>HTTPSTAT_SHOW_WHOIS</code></strong></summary>
+
+By default httpstat shows whois info of the remote IP.
 Set to `false` to disable this feature. Default is `true`.
 </details>
 
@@ -120,6 +136,8 @@ export HTTPSTAT_SHOW_IP=false
 export HTTPSTAT_SHOW_SPEED=true
 export HTTPSTAT_SAVE_BODY=false
 ```
+
+---
 
 ## Related Projects
 

@@ -1,59 +1,56 @@
-#!/usr/bin/env python
-# coding: utf-8
-# References:
-# man curl
-# https://curl.haxx.se/libcurl/c/curl_easy_getinfo.html
-# https://curl.haxx.se/libcurl/c/easy_getinfo_options.html
-# http://blog.kenweiner.com/2014/11/http-request-timings-with-curl.html
-
-from __future__ import print_function
-
-import os
+import argparse
 import json
-import sys
 import logging
-import tempfile
+import os
+import requests
 import subprocess
+import sys
+import tempfile
+import whois
+
+from rich.console import Console
+from rich.rule import Rule
+from typing import Optional, Tuple, Union
 
 
-__version__ = '1.2.1'
+console = Console()
+
+__version__ = "1.2.2"
 
 
-PY3 = sys.version_info >= (3,)
-
-if PY3:
-    xrange = range
-
-WIN = os.name == 'nt'
-
-if WIN:
-    try:
-        import colorama
-    except ImportError:
-        print('Please install colorama for better color support in Windows')
-    else:
-        colorama.init()
+env_keys = {
+    "SHOW_BODY": "HTTPSTAT_SHOW_BODY",
+    "SHOW_WHOIS": "HTTPSTAT_SHOW_WHOIS",
+    "SHOW_IP": "HTTPSTAT_SHOW_IP",
+    "SHOW_SPEED": "HTTPSTAT_SHOW_SPEED",
+    "SAVE_BODY": "HTTPSTAT_SAVE_BODY",
+    "CURL_BIN": "HTTPSTAT_CURL_BIN",
+    "DEBUG": "HTTPSTAT_DEBUG",
+}
 
 
-# Env class is copied from https://github.com/reorx/getenv/blob/master/getenv.py
-class Env(object):
-    prefix = 'HTTPSTAT'
-    _instances = []
+def get_env(env_key: str, default: Optional[str] = None) -> str:
+    """
+    Get the specified key value from the environment variable, or return the default value if it does not exist.
 
-    def __init__(self, key):
-        self.key = key.format(prefix=self.prefix)
-        Env._instances.append(self)
+    Args.
+        env_key: Environment variable key name.
+        default: The default value returned if the specified environment variable does not exist.
 
-    def get(self, default=None):
-        return os.environ.get(self.key, default)
+    Returns: The value or default value of the environment variable.
+        The value or default value of the environment variable.
+    """
+    return os.environ.get(env_keys[env_key], default)
 
 
-ENV_SHOW_BODY = Env('{prefix}_SHOW_BODY')
-ENV_SHOW_IP = Env('{prefix}_SHOW_IP')
-ENV_SHOW_SPEED = Env('{prefix}_SHOW_SPEED')
-ENV_SAVE_BODY = Env('{prefix}_SAVE_BODY')
-ENV_CURL_BIN = Env('{prefix}_CURL_BIN')
-ENV_DEBUG = Env('{prefix}_DEBUG')
+# get env
+show_body = get_env("SHOW_BODY", "false").lower() == "true"
+show_whois = get_env("SHOW_WHOIS", "true").lower() == "true"
+show_ip = get_env("SHOW_IP", "true").lower() == "true"
+show_speed = get_env("SHOW_SPEED", "false").lower() == "true"
+save_body = get_env("SAVE_BODY", "true").lower() == "true"
+curl_bin = get_env("CURL_BIN", "curl")
+is_debug = get_env("DEBUG", "false").lower() == "true"
 
 
 curl_format = """{
@@ -72,6 +69,7 @@ curl_format = """{
 "local_port": "%{local_port}"
 }"""
 
+
 https_template = """
   DNS Lookup   TCP Connection   TLS Handshake   Server Processing   Content Transfer
 [   {a0000}  |     {a0001}    |    {a0002}    |      {a0003}      |      {a0004}     ]
@@ -81,7 +79,7 @@ https_template = """
                                     pretransfer:{b0002}           |                  |
                                                       starttransfer:{b0003}          |
                                                                                  total:{b0004}
-"""[1:]
+"""
 
 http_template = """
   DNS Lookup   TCP Connection   Server Processing   Content Transfer
@@ -91,86 +89,120 @@ http_template = """
                         connect:{b0001}           |                  |
                                       starttransfer:{b0003}          |
                                                                  total:{b0004}
-"""[1:]
+"""
 
 
-# Color code is copied from https://github.com/reorx/python-terminal-color/blob/master/color_simple.py
-ISATTY = sys.stdout.isatty()
+def quit(message: str = None, code: int = 0) -> None:
+    """
+    Exits the program and displays the specified message.
 
+    Parameters:
+    - message: the message to display before exiting (optional).
+    - code: The exit code to return (optional).
 
-def make_color(code):
-    def color_func(s):
-        if not ISATTY:
-            return s
-        tpl = '\x1b[{}m{}\x1b[0m'
-        return tpl.format(code, s)
-    return color_func
-
-
-red = make_color(31)
-green = make_color(32)
-yellow = make_color(33)
-blue = make_color(34)
-magenta = make_color(35)
-cyan = make_color(36)
-
-bold = make_color(1)
-underline = make_color(4)
-
-grayscale = {(i - 232): make_color('38;5;' + str(i)) for i in xrange(232, 256)}
-
-
-def quit(s, code=0):
-    if s is not None:
-        print(s)
+    Usage:
+    - quit() or quit(code=1) or quit(message="reason for quitting").
+    """
+    if message is not None:
+        console.print(message)
     sys.exit(code)
 
 
-def print_help():
-    help = """
-Usage: httpstat URL [CURL_OPTIONS]
-       httpstat -h | --help
-       httpstat --version
+def parse_arguments():
+    """
+    Define argparse arguments and options
+    """
+    parser = argparse.ArgumentParser(
+        description="httpstat_pro: visualizes `IP Infomation`, `WHOIS Infomation` and `curl(1)` statistics in a way of beauty and clarity."
+    )
+    parser.add_argument(
+        "URL", help="URL to request, could be with or without `http(s)://` prefix"
+    )
+    parser.add_argument(
+        "CURL_OPTIONS",
+        nargs="*",
+        help="Any curl supported options, except for -w -D -o -S -s, which are already used internally.",
+    )
+    # parser.add_argument("-h", "--help", action="store_true", help="show help")
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="show version",
+    )
+    return parser.parse_args()
 
-Arguments:
-  URL     url to request, could be with or without `http(s)://` prefix
 
-Options:
-  CURL_OPTIONS  any curl supported options, except for -w -D -o -S -s,
-                which are already used internally.
-  -h --help     show this screen.
-  --version     show version.
+def get_whois_info(url: str) -> dict:
+    """
+    Get WHOIS information from the given URL.
 
-Environments:
-  HTTPSTAT_SHOW_BODY    Set to `true` to show response body in the output,
-                        note that body length is limited to 1023 bytes, will be
-                        truncated if exceeds. Default is `false`.
-  HTTPSTAT_SHOW_IP      By default httpstat shows remote and local IP/port address.
-                        Set to `false` to disable this feature. Default is `true`.
-  HTTPSTAT_SHOW_SPEED   Set to `true` to show download and upload speed.
-                        Default is `false`.
-  HTTPSTAT_SAVE_BODY    By default httpstat stores body in a tmp file,
-                        set to `false` to disable this feature. Default is `true`
-  HTTPSTAT_CURL_BIN     Indicate the curl bin path to use. Default is `curl`
-                        from current shell $PATH.
-  HTTPSTAT_DEBUG        Set to `true` to see debugging logs. Default is `false`
-"""[1:-1]
-    print(help)
+    This function first resolves the domain name from the URL and then uses the whois library to query the WHOIS information for the domain.
+
+    Args.
+        url (str): The URL to query for WHOIS information.
+
+    Returns.
+        dict: The WHOIS information, in dictionary form.
+    """
+    domain = url.split("//")[-1].split("/")[0].split("?")[0]
+    w = whois.whois(domain)
+    return w
+
+
+def run_curl_command(
+    curl_bin: str, curl_args: list, url: str
+) -> Tuple[Optional[str], Optional[str]]:
+    """Execute the curl command and return the result.
+
+    Args.
+        curl_bin (str): Path to the curl executable.
+        curl_args (list): List of arguments to the curl command.
+        url (str): The URL of the request.
+
+    Returns.
+        tuple: (output, error message), if successful, error message None.
+    """
+    cmd = [curl_bin] + curl_args + [url]
+    try:
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=False)
+        return output.decode("utf-8"), None
+    except subprocess.CalledProcessError as e:
+        return None, e.output.decode("utf-8")
+
+
+def format_time_centered(time_value: Union[float, int]) -> str:
+    """
+    Format the time data to be center-aligned and add units.
+
+    Args.
+        time_value (float or int): time_value.
+
+    Returns.
+        str: Formatted string containing the time unit.
+    """
+    return f"[bold cyan]{str(time_value)+'ms':^7}[/bold cyan]"
+
+
+def format_time_left_aligned(time_value: Union[float, int]) -> str:
+    """
+    Format the time data to be left-aligned, and add units.
+
+    Args:
+            time_value (float or int): The value of the time.
+
+    Returns:
+            str: A formatted string containing a unit of time.
+    """
+    return f"[bold cyan]{str(time_value)+'ms':<7}[/bold cyan]"
 
 
 def main():
-    args = sys.argv[1:]
-    if not args:
-        print_help()
-        quit(None, 0)
+    args = parse_arguments()
 
-    # get envs
-    show_body = 'true' in ENV_SHOW_BODY.get('false').lower()
-    show_ip = 'true' in ENV_SHOW_IP.get('true').lower()
-    show_speed = 'true'in ENV_SHOW_SPEED.get('false').lower()
-    save_body = 'true' in ENV_SAVE_BODY.get('true').lower()
-    curl_bin = ENV_CURL_BIN.get('curl')
-    is_debug = 'true' in ENV_DEBUG.get('false').lower()
+    url = args.URL
+    curl_args = args.CURL_OPTIONS
 
     # configure logging
     if is_debug:
@@ -178,40 +210,40 @@ def main():
     else:
         log_level = logging.INFO
     logging.basicConfig(level=log_level)
-    lg = logging.getLogger('httpstat')
+    logger = logging.getLogger(__name__)
 
     # log envs
-    lg.debug('Envs:\n%s', '\n'.join('  {}={}'.format(i.key, i.get('')) for i in Env._instances))
-    lg.debug('Flags: %s', dict(
-        show_body=show_body,
-        show_ip=show_ip,
-        show_speed=show_speed,
-        save_body=save_body,
-        curl_bin=curl_bin,
-        is_debug=is_debug,
-    ))
-
-    # get url
-    url = args[0]
-    if url in ['-h', '--help']:
-        print_help()
-        quit(None, 0)
-    elif url == '--version':
-        print('httpstat {}'.format(__version__))
-        quit(None, 0)
-
-    curl_args = args[1:]
+    logger.debug(
+        "Envs:\n%s",
+        "\n".join("  {}={}".format(key, get_env(key)) for key in env_keys),
+    )
+    logger.debug(
+        "Flags: %s",
+        dict(
+            show_body=show_body,
+            show_whois=show_whois,
+            show_ip=show_ip,
+            show_speed=show_speed,
+            save_body=save_body,
+            curl_bin=curl_bin,
+            is_debug=is_debug,
+        ),
+    )
 
     # check curl args
     exclude_options = [
-        '-w', '--write-out',
-        '-D', '--dump-header',
-        '-o', '--output',
-        '-s', '--silent',
+        "-w",
+        "--write-out",
+        "-D",
+        "--dump-header",
+        "-o",
+        "--output",
+        "-s",
+        "--silent",
     ]
     for i in exclude_options:
         if i in curl_args:
-            quit(yellow('Error: {} is not allowed in extra curl args'.format(i)), 1)
+            quit("Error: {} is not allowed in extra curl args".format(i), 1)
 
     # tempfile for output
     bodyf = tempfile.NamedTemporaryFile(delete=False)
@@ -223,139 +255,160 @@ def main():
     # run cmd
     cmd_env = os.environ.copy()
     cmd_env.update(
-        LC_ALL='C',
+        LC_ALL="C",
     )
-    cmd_core = [curl_bin, '-w', curl_format, '-D', headerf.name, '-o', bodyf.name, '-s', '-S']
-    cmd = cmd_core + curl_args + [url]
-    lg.debug('cmd: %s', cmd)
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=cmd_env)
-    out, err = p.communicate()
-    if PY3:
-        out, err = out.decode(), err.decode()
-    lg.debug('out: %s', out)
+    curl_args = [
+        "-w",
+        curl_format,
+        "-D",
+        headerf.name,
+        "-o",
+        bodyf.name,
+        "-s",
+        "-S",
+    ] + curl_args
 
-    # print stderr
-    if p.returncode == 0:
-        if err:
-            print(grayscale[16](err))
+    # Calling the run_curl_command function to get curl_output
+    curl_output, curl_error = run_curl_command(curl_bin, curl_args, url)
+    if curl_error:
+        quit(f"Curl command failed with error: {curl_error}", 1)
     else:
-        _cmd = list(cmd)
-        _cmd[2] = '<output-format>'
-        _cmd[4] = '<tempfile>'
-        _cmd[6] = '<tempfile>'
-        print('> {}'.format(' '.join(_cmd)))
-        quit(yellow('curl error: {}'.format(err)), p.returncode)
+        # parse output
+        try:
+            curl_result = json.loads(curl_output)
+        except ValueError as e:
+            quit("Could not decode JSON: {}".format(e), 1)
+        for metric in curl_result:
+            if metric.startswith("time_"):
+                curl_result[metric] = int(curl_result[metric] * 1000)
 
-    # parse output
-    try:
-        d = json.loads(out)
-    except ValueError as e:
-        print(yellow('Could not decode json: {}'.format(e)))
-        print('curl result:', p.returncode, grayscale[16](out), grayscale[16](err))
-        quit(None, 1)
-    for k in d:
-        if k.startswith('time_'):
-            d[k] = int(d[k] * 1000)
+        # Calculation of time for each stage
+        curl_result.update(
+            range_dns=curl_result["time_namelookup"],
+            range_connection=curl_result["time_connect"]
+            - curl_result["time_namelookup"],
+            range_ssl=curl_result["time_pretransfer"] - curl_result["time_connect"],
+            range_server=curl_result["time_starttransfer"]
+            - curl_result["time_pretransfer"],
+            range_transfer=curl_result["time_total"]
+            - curl_result["time_starttransfer"],
+        )
 
-    # calculate ranges
-    d.update(
-        range_dns=d['time_namelookup'],
-        range_connection=d['time_connect'] - d['time_namelookup'],
-        range_ssl=d['time_pretransfer'] - d['time_connect'],
-        range_server=d['time_starttransfer'] - d['time_pretransfer'],
-        range_transfer=d['time_total'] - d['time_starttransfer'],
-    )
+        console.print(Rule(style="#00b294"))
+
+    # whois
+    if show_whois:
+        console.print("\n", "🔗\ufe0e:", f"[bold #00b294]URL: {url}[/bold #00b294]")
+        whois_info = get_whois_info(url)
+        console.print(
+            "\n",
+            "🫣\ufe0e:",
+            f"[bold #00b294]WHOIS Infoamtion:[/bold #00b294] \n {whois_info}",
+        )
+        console.print(Rule(style="#00b294"))
 
     # ip
     if show_ip:
-        s = 'Connected to {}:{} from {}:{}'.format(
-            cyan(d['remote_ip']), cyan(d['remote_port']),
-            d['local_ip'], d['local_port'],
-        )
-        print(s)
-        print()
+        s = f"\nConnected to {curl_result['remote_ip']}:{curl_result['remote_port']} from {curl_result['local_ip']}:{curl_result['local_port']}"
+        console.print(f"\n {s} \n")
+
+        url = f"http://ip-api.com/json/{curl_result['remote_ip']}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            console.print(
+                "\n",
+                "🗺️\ufe0e:",
+                f"[bold #00b294]Remote IP Infomation:[/bold #00b294] [dim](Powered By ip-api.com)[/dim] \n {json.dumps(response.json(), indent=2)}",
+            )
+            country = response.json().get("country", "Unknown")
+            regionName = response.json().get("regionName", "Unknown")
+            city = response.json().get("city", "Unknown")
+            remote_ip_location = f"[cyan]{country}[/cyan]--[cyan]{regionName}[/cyan]--[cyan]{city}[/cyan]"
+        else:
+            remote_ip_location = "Unknown Location"
+        console.print(f"\nRemote IP Location: {remote_ip_location}")
+        console.print(Rule(style="#00b294"))
 
     # print header & body summary
-    with open(headerf.name, 'r') as f:
+    with open(headerf.name, "r") as f:
         headers = f.read().strip()
     # remove header file
-    lg.debug('rm header file %s', headerf.name)
+    logger.debug("rm header file %s", headerf.name)
     os.remove(headerf.name)
 
-    for loop, line in enumerate(headers.split('\n')):
+    console.print("\n", "😑\ufe0e:", f"[bold #00b294]Response Headers:[/bold #00b294]")
+    for loop, line in enumerate(headers.split("\n")):
         if loop == 0:
-            p1, p2 = tuple(line.split('/'))
-            print(green(p1) + grayscale[14]('/') + cyan(p2))
-        else:
-            pos = line.find(':')
-            print(grayscale[14](line[:pos + 1]) + cyan(line[pos + 1:]))
+            p1, p2 = tuple(line.split("/"))
+            console.print(f"[cyan]{p1}[/cyan] / [cyan]{p2}[/cyan]")
 
-    print()
+        else:
+            pos = line.find(":")
+            console.print(
+                f"[dim]{line[: pos + 1]}[/dim] [cyan]{line[pos + 1 :]}[/cyan]"
+            )
 
     # body
     if show_body:
         body_limit = 1024
-        with open(bodyf.name, 'r') as f:
+        with open(bodyf.name, "r") as f:
             body = f.read().strip()
         body_len = len(body)
 
         if body_len > body_limit:
-            print(body[:body_limit] + cyan('...'))
-            print()
-            s = '{} is truncated ({} out of {})'.format(green('Body'), body_limit, body_len)
+            console.print(f"body[:body_limit] [green]...[/green]")
+            s = f"[green]Body[/green] [dim white]is truncated ({body_limit} out of {body_len})[/dim white]"
             if save_body:
-                s += ', stored in: {}'.format(bodyf.name)
-            print(s)
+                s += f", stored in: {bodyf.name}"
+            console.print(s)
         else:
-            print(body)
+            console.print(body)
     else:
         if save_body:
-            print('{} stored in: {}'.format(green('Body'), bodyf.name))
+            console.print(
+                f"[green]Body[green/] [dim white]stored in: {bodyf.name}[/dim white]"
+            )
 
     # remove body file
     if not save_body:
-        lg.debug('rm body file %s', bodyf.name)
+        logger.debug("rm body file %s", bodyf.name)
         os.remove(bodyf.name)
 
     # print stat
-    if url.startswith('https://'):
+    if url.startswith("https://"):
         template = https_template
     else:
         template = http_template
 
     # colorize template first line
-    tpl_parts = template.split('\n')
-    tpl_parts[0] = grayscale[16](tpl_parts[0])
-    template = '\n'.join(tpl_parts)
-
-    def fmta(s):
-        return cyan('{:^7}'.format(str(s) + 'ms'))
-
-    def fmtb(s):
-        return cyan('{:<7}'.format(str(s) + 'ms'))
+    tpl_parts = template.split("\n")
+    template = "\n".join(tpl_parts)
 
     stat = template.format(
         # a
-        a0000=fmta(d['range_dns']),
-        a0001=fmta(d['range_connection']),
-        a0002=fmta(d['range_ssl']),
-        a0003=fmta(d['range_server']),
-        a0004=fmta(d['range_transfer']),
+        a0000=format_time_centered(curl_result["range_dns"]),
+        a0001=format_time_centered(curl_result["range_connection"]),
+        a0002=format_time_centered(curl_result["range_ssl"]),
+        a0003=format_time_centered(curl_result["range_server"]),
+        a0004=format_time_centered(curl_result["range_transfer"]),
         # b
-        b0000=fmtb(d['time_namelookup']),
-        b0001=fmtb(d['time_connect']),
-        b0002=fmtb(d['time_pretransfer']),
-        b0003=fmtb(d['time_starttransfer']),
-        b0004=fmtb(d['time_total']),
+        b0000=format_time_left_aligned(curl_result["time_namelookup"]),
+        b0001=format_time_left_aligned(curl_result["time_connect"]),
+        b0002=format_time_left_aligned(curl_result["time_pretransfer"]),
+        b0003=format_time_left_aligned(curl_result["time_starttransfer"]),
+        b0004=format_time_left_aligned(curl_result["time_total"]),
     )
-    print()
-    print(stat)
-
+    console.print("\n", "⏱️\ufe0e:", f"[bold #00b294]HTTP Stat:[/bold #00b294]")
+    console.print(stat)
+    console.print(Rule(style="#00b294"))
     # speed, originally bytes per second
     if show_speed:
-        print('speed_download: {:.1f} KiB/s, speed_upload: {:.1f} KiB/s'.format(
-            d['speed_download'] / 1024, d['speed_upload'] / 1024))
+        console.print(
+            "speed_download: {:.1f} KiB/s, speed_upload: {:.1f} KiB/s".format(
+                curl_result["speed_download"] / 1024, curl_result["speed_upload"] / 1024
+            )
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
