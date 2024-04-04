@@ -312,8 +312,8 @@ def main():
         s = f"\nConnected to {curl_result['remote_ip']}:{curl_result['remote_port']} from {curl_result['local_ip']}:{curl_result['local_port']}"
         console.print(f"\n {s} \n")
 
-        url = f"http://ip-api.com/json/{curl_result['remote_ip']}"
-        response = requests.get(url)
+        url_ip_api = f"http://ip-api.com/json/{curl_result['remote_ip']}"
+        response = requests.get(url_ip_api)
         if response.status_code == 200:
             console.print(
                 "\n",
