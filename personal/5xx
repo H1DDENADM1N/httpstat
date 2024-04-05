@@ -1,0 +1,48 @@
+# 5xx: HTTP Server Error Codes
+
+500 # Internal Server Error
+    # 服务器遇到一个意外的情况，阻止它完成请求。
+
+501 # Not Implemented
+    # 服务器不支持请求的功能。
+
+502 # Bad Gateway
+    # 服务器作为网关或代理，从上游服务器收到了一个无效的响应。
+
+503 # Service Unavailable
+    # 服务器目前无法处理请求，可能是由于维护或过载。
+
+504 # Gateway Timeout
+    # 服务器作为网关或代理，没有及时从上游服务器收到响应。
+
+505 # HTTP Version Not Supported
+    # 服务器不支持请求的HTTP协议版本。
+
+506 # Variant Also Negotiates (2295)
+    # 服务器内部配置错误，选择的变体也会进行内容协商。
+
+507 # Insufficient Storage (WebDAV 4918)
+    # 服务器无法存储请求的资源，通常是服务器空间不足。
+
+508 # Loop Detected (WebDAV 5842)
+    # 服务器在处理请求时检测到循环。
+
+509 # Bandwidth Limit Exceeded (nostd)
+    # 服务器达到带宽限制，无法处理更多请求。
+
+510 # Not Extended (2774)
+    # 服务器需要客户端扩展请求，以完成处理。
+
+511 # Network Authentication Required (draft)
+    # 客户端需要进行网络认证才能访问请求的资源。
+
+598 # Network read timeout error (nostd)
+    # 网络读取超时错误，服务器在等待响应时超时。
+
+599 # Network connect timeout error (nostd)
+    # 网络连接超时错误，服务器在尝试连接时超时。
+
+
+# Wikipedia was used to produce all HTTP codes content:
+
+http://en.wikipedia.org/wiki/HTTP_status

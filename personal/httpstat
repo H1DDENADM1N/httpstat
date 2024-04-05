@@ -1,0 +1,258 @@
+# 1xx: HTTP Informational Codes
+
+100 # Continue
+    # 服务器已经接收到请求头，客户端可以继续发送请求正文。
+
+101 # Switching Protocols
+    # 服务器同意切换协议，通常用于升级到更高版本的HTTP或切换到不同的协议。
+
+102 # Processing (WebDAV)
+    # 服务器已收到并正在处理请求，但没有响应可用，用于WebDAV事务。
+
+103 # Checkpoint (draft POST PUT)
+    # 用于指示上传进度，尤其是在上传大文件时，这是一个非标准的状态码。
+
+122 # Request-URI too long (IE7)
+    # 请求的URI过长，这是Internet Explorer 7定义的非标准扩展。
+
+
+# 2xx: HTTP Successful Codes
+
+200 # OK
+    # 请求已成功处理，通常用于GET、POST或HEAD请求。
+
+201 # Created
+    # 请求已成功处理，并在服务器上创建了新的资源。
+
+202 # Accepted
+    # 请求已接受，但尚未处理，用于异步操作或需要长时间处理的请求。
+
+203 # Non-Authoritative Information (1.1)
+    # 返回的信息来自第三方副本，可能不是最新的。
+
+204 # No Content
+    # 服务器成功处理了请求，但没有返回任何内容。
+
+205 # Reset Content
+    # 服务器成功处理了请求，但没有返回任何内容，并要求客户端重置视图。
+
+206 # Partial Content
+    # 服务器成功处理了部分GET请求，通常用于范围请求。
+
+207 # Multi-Status (WebDAV 4918)
+    # 用于WebDAV，包含多个状态代码，用于多个资源的集合操作。
+
+208 # Already Reported (WebDAV 5842)
+    # 用于WebDAV，表示成员已在之前的响应中列出。
+
+226 # IM Used (3229 GET)
+    # 服务器已满足对资源的条件请求。
+
+
+# 3xx: HTTP Redirection Codes
+
+300 # Multiple Choices
+    # 客户端可以选择多个选项，用于重定向。
+
+301 # Moved Permanently
+    # 请求的资源已被永久移动到新的URI。
+
+302 # Found
+    # 请求的资源现在临时从不同的URI响应请求。
+
+303 # See Other (1.1)
+    # 客户端应该使用GET方法从另一个URI获取响应。
+
+304 # Not Modified
+    # 客户端的缓存副本是最新的，不需要重新传输。
+
+305 # Use Proxy (1.1)
+    # 必须通过代理访问请求的资源。
+
+306 # Switch Proxy (unused)
+    # 此代码不再使用。
+
+307 # Temporary Redirect (1.1)
+    # 请求应该使用同样的方法重新发送到另一个URI。
+
+308 # Permanent Redirect (7538)
+    # 请求和所有将来的请求应该使用另一个URI。
+
+# 307 and 308 are similar to 302 and 301,
+# but the new request method after redirect must be the same,
+# as on initial request.
+
+
+# 4xx: HTTP Client Error Code
+
+400 # Bad Request
+    # 服务器无法理解请求的格式。
+
+401 # Unauthorized
+    # 请求需要用户身份验证。
+
+402 # Payment Required (res)
+    # 保留以供将来使用。
+
+403 # Forbidden
+    # 服务器理解请求，但拒绝执行它。
+
+404 # Not Found
+    # 服务器找不到请求的资源。
+
+405 # Method Not Allowed
+    # 请求的方法不允许。
+
+406 # Not Acceptable
+    # 服务器只能生成客户端不接受的响应。
+
+407 # Proxy Authentication Required
+    # 需要代理身份验证。
+
+408 # Request Timeout
+    # 服务器等候请求时发生超时。
+
+409 # Conflict
+    # 请求在资源上造成冲突。
+
+410 # Gone
+    # 请求的资源不再可用。
+
+411 # Length Required
+    # 服务器拒绝不含有效内容长度标头字段的请求。
+
+412 # Precondition Failed
+    # 服务器未满足请求的先决条件。
+
+413 # Request Entity Too Large
+    # 服务器拒绝处理当前请求，因为请求实体过大。
+
+414 # Request-URI Too Long
+    # 服务器拒绝请求，因为URI过长。
+
+415 # Unsupported Media Type
+    # 服务器拒绝请求的格式。
+
+416 # Requested Range Not Satisfiable
+    # 无法提供请求的范围。
+
+417 # Expectation Failed
+    # 服务器未满足期望标头字段的要求。
+
+418 # I’m a teapot (2324)
+    # 愚人节玩笑，服务器拒绝作为茶壶来泡咖啡。
+
+422 # Unprocessable Entity (WebDAV 4918)
+    # 服务器理解内容类型，但请求实体不正确。
+
+423 # Locked (WebDAV 4918)
+    # 请求的资源被锁定。
+
+424 # Failed Dependency (WebDAV 4918)
+    # 由于之前的请求失败，请求失败。
+
+425 # Unordered Collection (3648)
+    # 表示服务器无法处理集合中的请求，因为它们没有按照正确的顺序。
+
+426 # Upgrade Required (2817)
+    # 客户端应该切换到不同的协议，如TLS/1.0。
+
+428 # Precondition Required (draft)
+    # 客户端应该在请求中发送先决条件。
+
+429 # Too Many Requests (draft)
+    # 客户端已发送太多请求，服务器暂时无法处理更多请求。
+
+431 # Request Header Fields Too Large (draft)
+    # 服务器不愿意处理请求，因为请求头字段太大。
+
+444 # No Response (nginx)
+    # 服务器没有返回任何响应，用于服务器拒绝提供服务。
+
+449 # Retry With (MS)
+    # 客户端应该稍后再试，可能包含一些额外的信息。
+
+450 # Blocked By Windows Parental Controls (MS)
+    # 请求被Windows家长控制阻止。
+
+451 # Unavailable For Legal Reasons (draft)
+    # 由于法律原因，服务器无法提供资源。
+
+499 # Client Closed Request (nginx)
+    # 客户端关闭了请求，通常是由于客户端主动中断了连接。
+
+
+# 5xx: HTTP Server Error Codes
+
+500 # Internal Server Error
+    # 服务器遇到一个意外的情况，阻止它完成请求。
+
+501 # Not Implemented
+    # 服务器不支持请求的功能。
+
+502 # Bad Gateway
+    # 服务器作为网关或代理，从上游服务器收到了一个无效的响应。
+
+503 # Service Unavailable
+    # 服务器目前无法处理请求，可能是由于维护或过载。
+
+504 # Gateway Timeout
+    # 服务器作为网关或代理，没有及时从上游服务器收到响应。
+
+505 # HTTP Version Not Supported
+    # 服务器不支持请求的HTTP协议版本。
+
+506 # Variant Also Negotiates (2295)
+    # 服务器内部配置错误，选择的变体也会进行内容协商。
+
+507 # Insufficient Storage (WebDAV 4918)
+    # 服务器无法存储请求的资源，通常是服务器空间不足。
+
+508 # Loop Detected (WebDAV 5842)
+    # 服务器在处理请求时检测到循环。
+
+509 # Bandwidth Limit Exceeded (nostd)
+    # 服务器达到带宽限制，无法处理更多请求。
+
+510 # Not Extended (2774)
+    # 服务器需要客户端扩展请求，以完成处理。
+
+511 # Network Authentication Required (draft)
+    # 客户端需要进行网络认证才能访问请求的资源。
+
+598 # Network read timeout error (nostd)
+    # 网络读取超时错误，服务器在等待响应时超时。
+
+599 # Network connect timeout error (nostd)
+    # 网络连接超时错误，服务器在尝试连接时超时。
+
+
+# HTTP Code Comments
+
+
+WebDAV                                      WebDAV extension
+
+1.1                                         HTTP/1.1
+
+GET, POST, PUT, POST                        For these methods only
+
+IE                                          IE extension
+
+MS                                          MS extension
+
+nginx                                       nginx extension
+
+2518, 2817, 2295, 2774, 3229, 4918, 5842    RFC number
+
+draft                                       Proposed draft
+
+nostd                                       Non standard extension
+
+res                                         Reserved for future use
+
+unused                                      No more in use, deprecated
+
+
+# Wikipedia was used to produce all HTTP codes content:
+
+http://en.wikipedia.org/wiki/HTTP_status

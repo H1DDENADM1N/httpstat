@@ -1,0 +1,36 @@
+# 2xx: HTTP Successful Codes
+
+200 # OK
+    # 请求已成功处理，通常用于GET、POST或HEAD请求。
+
+201 # Created
+    # 请求已成功处理，并在服务器上创建了新的资源。
+
+202 # Accepted
+    # 请求已接受，但尚未处理，用于异步操作或需要长时间处理的请求。
+
+203 # Non-Authoritative Information (1.1)
+    # 返回的信息来自第三方副本，可能不是最新的。
+
+204 # No Content
+    # 服务器成功处理了请求，但没有返回任何内容。
+
+205 # Reset Content
+    # 服务器成功处理了请求，但没有返回任何内容，并要求客户端重置视图。
+
+206 # Partial Content
+    # 服务器成功处理了部分GET请求，通常用于范围请求。
+
+207 # Multi-Status (WebDAV 4918)
+    # 用于WebDAV，包含多个状态代码，用于多个资源的集合操作。
+
+208 # Already Reported (WebDAV 5842)
+    # 用于WebDAV，表示成员已在之前的响应中列出。
+
+226 # IM Used (3229 GET)
+    # 服务器已满足对资源的条件请求。
+
+
+# Wikipedia was used to produce all HTTP codes content:
+
+http://en.wikipedia.org/wiki/HTTP_status

@@ -44,6 +44,24 @@ function httpstat {
 
 ```
 
+### Cheatsheet Usage:
+Install [cheat](https://github.com/cheat/cheat)
+
+Move 📁`personal` to `%AppData% \Roaming\cheat\cheatsheets\`
+
+then use the command below to get the cheatsheet.
+
+```powershell
+cheat -ac httpstat
+cheat 1xx
+cheat 2xx
+cheat 3xx
+cheat 4xx
+cheat 5xx
+```
+
+![cheat](cheat.png)
+
 ### cURL Options
 
 Because `httpstat` is a wrapper of cURL, you can pass any cURL supported option after the url (except for `-w`, `-D`, `-o`, `-s`, `-S` which are already used by `httpstat`):

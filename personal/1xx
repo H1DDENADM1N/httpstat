@@ -1,0 +1,21 @@
+# 1xx: HTTP Informational Codes
+
+100 # Continue
+    # 服务器已经接收到请求头，客户端可以继续发送请求正文。
+
+101 # Switching Protocols
+    # 服务器同意切换协议，通常用于升级到更高版本的HTTP或切换到不同的协议。
+
+102 # Processing (WebDAV)
+    # 服务器已收到并正在处理请求，但没有响应可用，用于WebDAV事务。
+
+103 # Checkpoint (draft POST PUT)
+    # 用于指示上传进度，尤其是在上传大文件时，这是一个非标准的状态码。
+
+122 # Request-URI too long (IE7)
+    # 请求的URI过长，这是Internet Explorer 7定义的非标准扩展。
+
+
+# Wikipedia was used to produce all HTTP codes content:
+
+http://en.wikipedia.org/wiki/HTTP_status

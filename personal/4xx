@@ -1,0 +1,102 @@
+# 4xx: HTTP Client Error Code
+
+400 # Bad Request
+    # 服务器无法理解请求的格式。
+
+401 # Unauthorized
+    # 请求需要用户身份验证。
+
+402 # Payment Required (res)
+    # 保留以供将来使用。
+
+403 # Forbidden
+    # 服务器理解请求，但拒绝执行它。
+
+404 # Not Found
+    # 服务器找不到请求的资源。
+
+405 # Method Not Allowed
+    # 请求的方法不允许。
+
+406 # Not Acceptable
+    # 服务器只能生成客户端不接受的响应。
+
+407 # Proxy Authentication Required
+    # 需要代理身份验证。
+
+408 # Request Timeout
+    # 服务器等候请求时发生超时。
+
+409 # Conflict
+    # 请求在资源上造成冲突。
+
+410 # Gone
+    # 请求的资源不再可用。
+
+411 # Length Required
+    # 服务器拒绝不含有效内容长度标头字段的请求。
+
+412 # Precondition Failed
+    # 服务器未满足请求的先决条件。
+
+413 # Request Entity Too Large
+    # 服务器拒绝处理当前请求，因为请求实体过大。
+
+414 # Request-URI Too Long
+    # 服务器拒绝请求，因为URI过长。
+
+415 # Unsupported Media Type
+    # 服务器拒绝请求的格式。
+
+416 # Requested Range Not Satisfiable
+    # 无法提供请求的范围。
+
+417 # Expectation Failed
+    # 服务器未满足期望标头字段的要求。
+
+418 # I’m a teapot (2324)
+    # 愚人节玩笑，服务器拒绝作为茶壶来泡咖啡。
+
+422 # Unprocessable Entity (WebDAV 4918)
+    # 服务器理解内容类型，但请求实体不正确。
+
+423 # Locked (WebDAV 4918)
+    # 请求的资源被锁定。
+
+424 # Failed Dependency (WebDAV 4918)
+    # 由于之前的请求失败，请求失败。
+
+425 # Unordered Collection (3648)
+    # 表示服务器无法处理集合中的请求，因为它们没有按照正确的顺序。
+
+426 # Upgrade Required (2817)
+    # 客户端应该切换到不同的协议，如TLS/1.0。
+
+428 # Precondition Required (draft)
+    # 客户端应该在请求中发送先决条件。
+
+429 # Too Many Requests (draft)
+    # 客户端已发送太多请求，服务器暂时无法处理更多请求。
+
+431 # Request Header Fields Too Large (draft)
+    # 服务器不愿意处理请求，因为请求头字段太大。
+
+444 # No Response (nginx)
+    # 服务器没有返回任何响应，用于服务器拒绝提供服务。
+
+449 # Retry With (MS)
+    # 客户端应该稍后再试，可能包含一些额外的信息。
+
+450 # Blocked By Windows Parental Controls (MS)
+    # 请求被Windows家长控制阻止。
+
+451 # Unavailable For Legal Reasons (draft)
+    # 由于法律原因，服务器无法提供资源。
+
+499 # Client Closed Request (nginx)
+    # 客户端关闭了请求，通常是由于客户端主动中断了连接。
+
+
+# Wikipedia was used to produce all HTTP codes content:
+
+http://en.wikipedia.org/wiki/HTTP_status

@@ -1,0 +1,37 @@
+# 3xx: HTTP Redirection Codes
+
+300 # Multiple Choices
+    # 客户端可以选择多个选项，用于重定向。
+
+301 # Moved Permanently
+    # 请求的资源已被永久移动到新的URI。
+
+302 # Found
+    # 请求的资源现在临时从不同的URI响应请求。
+
+303 # See Other (1.1)
+    # 客户端应该使用GET方法从另一个URI获取响应。
+
+304 # Not Modified
+    # 客户端的缓存副本是最新的，不需要重新传输。
+
+305 # Use Proxy (1.1)
+    # 必须通过代理访问请求的资源。
+
+306 # Switch Proxy (unused)
+    # 此代码不再使用。
+
+307 # Temporary Redirect (1.1)
+    # 请求应该使用同样的方法重新发送到另一个URI。
+
+308 # Permanent Redirect (7538)
+    # 请求和所有将来的请求应该使用另一个URI。
+
+# 307 and 308 are similar to 302 and 301,
+# but the new request method after redirect must be the same,
+# as on initial request.
+
+
+# Wikipedia was used to produce all HTTP codes content:
+
+http://en.wikipedia.org/wiki/HTTP_status
